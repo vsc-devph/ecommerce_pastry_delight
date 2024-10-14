@@ -414,6 +414,7 @@ def checkout():
             item_line = model.OrderLine(
                 order_header_id=0,
                 product_id=item['id'],
+                product_name=item['name'],
                 product_desc=item['description'],
                 quantity=item['qty'],
                 price=item['price'],
@@ -424,10 +425,19 @@ def checkout():
             )
             item_details.append(item_line)
 
+        #INSERT DETAILS TO DATABASE
         new_order_id = db_connect.add_order(new_order, item_details)
         if new_order_id > 0:
+            #REMOVE ITEMS IN CART AND ORDER DETAILS
             session.pop('order')
             session.pop('cart')
+
+            #SEND ORDER NOTIF
+            new_order_details = db_connect.get_order(new_order_id)
+            html_content= mail_order_template(new_order_id)
+            send_notif(current_user.email, f"Pastry Delight: Order {new_order_details.order_num} - {new_order_details.status}", html_content)
+
+            #CREATE STRIPE SESSION
             stripe_resp = payment_api(new_order_id)
             if stripe_resp:
                 db_connect.update_stripe_order(new_order_id, stripe_resp["id"])
@@ -509,7 +519,7 @@ def checkout_success(order_id):
 
     html_content = mail_order_template(order_id)
     user = db_connect.get_user_details(order.user_id)
-    send_notif(user.email, "Pastry Delight: Order "+order.order_num, html_content)
+    send_notif(user.email, f"Pastry Delight: Order {order.order_num} - {order.status}", html_content)
 
     return redirect(url_for('order_list'))
 
@@ -529,7 +539,7 @@ def mail_order_template(order_id):
     lines = ""
     for line in order:
         lines = lines + "<tr style='border-bottom:1px solid  #e5e5e5; '>"
-        lines = lines + f"<td>{line['product_desc']}<br/><span class='fs-6'>{line['quantity']}*{line['price']}</span></td>"
+        lines = lines + f"<td>{line['product_name']} <br/><span style='font-size:10px; color:#777'>{line['product_desc']}</span><br/><span style='font-size:12px'>{int(line['quantity'])}*{line['price']}</span></td>"
         lines = lines + f"<td style='text-align:right'>{line['line_price']}</td>"
         lines = lines + "</tr>"
 
@@ -562,11 +572,49 @@ def order_list():
     return render_template("orders.html", form=form, orders=orders, is_admin=is_admin, now=DATE_NOW)
 
 
+@app.route("/my_orders/cancel/<int:order_id>", methods=["GET", "POST"])
+def cancel_order(order_id):
+    if not current_user.is_authenticated:
+        flash('Please log in first to place order.', 'error')
+        return redirect(url_for('login'))
+
+    order = db_connect.get_order(order_id)
+    if not order:
+        flash("Order is inaccessible! Let's add items to cart instead.", 'error')
+        return redirect(url_for('home'))
+
+    if order.user_id != current_user.id:
+        user_access = db_connect.get_user_access(**{'user_id': current_user.id, 'user_group_id': 1})
+        if not user_access:
+            flash("Order is inaccessible! Let's add items to cart instead.", 'error')
+            return redirect(url_for('order_list'))
+
+    if order.status != 'PENDING PAYMENT':
+        flash("Order cannot be cancelled with its current status.", 'error')
+        return redirect(url_for('order_list'))
+
+    db_connect.update_to_cancel_order(order_id)
+    flash(f"Order #{order.order_num} successfully cancelled.","success")
+
+    html_content = mail_order_template(order_id)
+    send_notif(current_user.email,f"Pastry Delight: Order {order.order_num} - {order.status}",html_content)
+    return redirect(url_for('order_list'))
+
+
+
+
+
 @app.route("/order_details/<int:order_id>", methods=["GET", "POST"])
 def order_details(order_id):
     if not current_user.is_authenticated:
         flash('Please log in first to place order.', 'error')
         return redirect(url_for('login'))
+
+    is_admin = False
+    if current_user.is_authenticated:
+        user_access = db_connect.get_user_access(**{'user_id': current_user.id, 'user_group_id': 1})
+        if user_access:
+            is_admin = True
 
     order = db_connect.get_order_view(order_id)
     if not order:
@@ -579,7 +627,7 @@ def order_details(order_id):
             flash("Order is inaccessible! Let's add items to cart instead.", 'error')
             return redirect(url_for('home'))
 
-    return render_template("order_details.html", order=order, now=DATE_NOW)
+    return render_template("order_details.html", order=order, is_admin=is_admin, now=DATE_NOW)
 
 
 @app.route("/open_stripe_link/<int:order_id>", methods=["GET", "POST"])

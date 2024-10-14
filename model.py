@@ -125,6 +125,7 @@ class OrderLine(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     order_header_id: Mapped[int] = mapped_column(ForeignKey("order_header.id"))
     product_id: Mapped[int] = mapped_column(ForeignKey("product.id"))
+    product_name: Mapped[str] = mapped_column(String(250))
     product_desc: Mapped[str] = mapped_column(String(250))
     quantity: Mapped[int] = mapped_column(Float)
     price: Mapped[float] = mapped_column(Float)
@@ -449,7 +450,7 @@ class DBInit():
     def get_orders_by(self, user_id):
         record = self.db.session.execute(
             db.select(OrderHeader).where(OrderHeader.user_id == user_id).order_by(
-                OrderHeader.order_num)).scalars().all()
+                OrderHeader.order_date)).scalars().all()
         return record
 
     def get_order_lines(self, order_header_id):

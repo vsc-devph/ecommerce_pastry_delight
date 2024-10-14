@@ -26,7 +26,7 @@
     {% if messages %}
     {% for category, message in messages %}
     {% if category == "success" %}
-        <div class="alert bg-orange_light mt-3 fs-6 text-center fw-bold text-white" role="alert">
+        <div class="alert bg-warning mt-3 fs-6 text-center fw-bold" role="alert">
            <i class='bi bi-bag-heart-fill me-2'></i>  {{ message }}
         </div>
     {% endif %}
