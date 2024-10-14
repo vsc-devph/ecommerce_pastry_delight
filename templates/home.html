@@ -1,0 +1,153 @@
+{% include "header.html" %}
+{% from "bootstrap5/form.html" import render_form, render_field %}
+
+<body class="body_home">
+<main role="main" class="pt-5">
+
+    <section class="jumbotron text-center">
+        <div class="container">
+            <h1 class="jumbotron-heading">Savor it with delight!</h1>
+            <p class="lead text-muted">We offer diffrent pastries that can cater to your needs.
+                From original, gluten free, sugar free and keto.</p>
+            <p>
+                <a href="{{ url_for('about_us') }}" class="btn btn-light my-2">
+                    <i class="bi bi-house-heart-fill"></i>
+                    About Us
+                </a>
+                <a href="{{ url_for('my_cart') }}" class="btn btn-dark my-2">
+                    <i class="bi bi-cart-fill"></i>
+                    Go to My Cart
+                </a>
+            </p>
+        </div>
+    </section>
+    <div class=" d-flex justify-content-center">
+    {% with messages = get_flashed_messages(with_categories=true)%}
+    {% if messages %}
+    {% for category, message in messages %}
+    {% if category == "success" %}
+        <div class="alert bg-orange_light mt-3 fs-6 text-center fw-bold text-white" role="alert">
+           <i class='bi bi-bag-heart-fill me-2'></i>  {{ message }}
+        </div>
+    {% endif %}
+
+
+    {% if category == "error" %}
+    <div class="alert bg-danger text-white mt-3 fs-6 text-center" role="alert">
+       <i class="bi bi-exclamation-octagon-fill"></i>  {{message }}
+    </div>
+    {% endif %}
+
+    {%endfor%}
+    {% endif %}
+
+    {%endwith%}
+    </div>
+    <div class="album py-5 bg-light bg-opacity-90 mx-5">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-md-3">
+                    <div class="border border-1 bg-warning  p-3">
+                        <h6>Search Product</h6>
+                        <hr/>
+                        <div class="fs-7">
+                            {{ render_form(form) }}
+                        </div>
+
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="row">
+                        {% if products %}
+                        {% for product in products: %}
+                        <div class="col-md-4">
+                            <div id="prod{{ product.id}}" class="card mb-4 box-shadow">
+                                {% if product.img_path: %}
+                                <img id="prodimg{{product.id}}" class="card-img-top border border-1 border-light" alt="{{product.name}}"
+                                     src="{{ url_for('static', filename='images/products/'+product.img_path) }}"
+                                     data-holder-rendered="true" style="height: 225px; width: 100%; display: block;">
+                                {% else %}
+                                <img id="prodimg{{product.id}}" class="card-img-top border border-1 border-light" alt="{{product.name}}"
+                                     src="{{ url_for('static', filename='images/products/cupcake.png') }}"
+                                     data-holder-rendered="true" style="height: 285px; width: 100%; display: block;">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 id="prodname{{ product.id}}">{{ product.name }}</h5>
+                                    <div id="proddesc{{ product.id}}" class="card-text fs-6">{{ product.description }}</div>
+                                    <hr/>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="btn-group">
+                                            <button id="addtocart_{{product.id}}" type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                                    data-bs-target="#addtocart">
+                                                <i class="bi bi-cart-plus-fill"></i> Add to Cart
+                                            </button>
+                                        </div>
+                                        <small class="bg-light text-danger fw-bold fs-5 px-1 rounded">Php {{ '%02d' %
+                                            product.price }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        {% else %}
+                        <div class="alert alert-secondary bg-secondary text-center text-white fw-bold">
+                            No products found.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="addtocart" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <form id="frm_addtocart" class="form" action="{{ url_for('add_cart',item_id=0)}}" method="post">
+                    {{ form_cart.csrf_token }}
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel"><i class="bi bi-cart-plus-fill"></i> Add to Cart
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div id="modal-body" class="modal-body">
+                        <div class="row">
+                            <div class="col-md-4 col-lg-4">
+                                <img id="card_item_img" src="" class="w-100"/>
+                            </div>
+                            <div class="col-md-8 col-lg-8">
+                                <h5 id="cart_item_name"></h5>
+                                <div id="cart_item_desc"></div>
+
+                                <div class="input-group input-group-sm mb-3">
+                                    <span class="input-group-text bg-warning fw-bold" id="inputGroup-sizing-sm">
+                                        {{ form_cart.qty.label }}
+                                    </span>
+
+                                    {{ form_cart.qty(class_="border-1 border-warning w-25 fw-bold text-dark",value="0",id="cart_item_qty") }}
+                                </div>
+                                <div id="cart_item_price" class="d-flex justify-content-end text-danger">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit"  class="btn btn-sm btn-info">
+                            <i class="bi bi-check-circle-fill"></i>
+                            {{ form_cart.submit_btn.label }}
+                        </button>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</main>
+{% include "footer.html" %}
+</body>

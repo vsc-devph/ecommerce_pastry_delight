@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+{% from "bootstrap5/form.html" import render_form , render_field %}
+<html lang="en" >
+<head>
+    <meta charset="utf-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
+    <title>Pastry Delights</title>
+    {% block styles %}
+    <!-- Load Bootstrap-Flask CSS here -->
+    {{ bootstrap.load_css() }}
+    <link
+            rel="icon"
+            type="image/x-icon"
+            href="{{ url_for('static', filename='assets/favicon.ico') }}"
+    />
+
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link
+            href="{{ url_for('static', filename='css/style.css') }}"
+            rel="stylesheet"
+    />
+    <!-- Bootstrap Icons CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    {% endblock %}
+
+</head>
+<body class="body_signin">
+<div class="container_signin">
+
+    <h2 class="text-center">
+        <i class="bi bi-house-heart-fill"></i>
+        Pastry Delight
+    </h2>
+    <hr/>
+    <h4>Create Account</h4>
+    <h6><i class="bi bi-file-earmark-person"></i> A little info from you</h6>
+    <hr/>
+    {{ render_form(form,form_type='horizontal', horizontal_columns=('lg', 4, 8),extra_classes="form-signup fs-6") }}
+    <hr/>
+    <div class="d-flex justify-content-center align-items-center">
+
+        <a href="{{ url_for('login') }}" class="btn btn-warning btn-sm">Log in instead</a>
+        &nbsp;
+        <a href="{{ url_for('home') }}" class="btn btn-light btn-sm">
+            <i class="bi bi-cart-fill"></i>
+            Back to Shop
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true)%}
+    {% if messages %}
+    {% for category, message in messages %}
+    {% if category == "success" %}
+    <div class="alert alert-success mt-3 fs-6" role="alert">
+        {{ message }}
+    </div>
+    {% endif %}
+
+
+    {% if category == "error" %}
+    <div class="alert alert-danger mt-3 fs-6" role="alert">
+        {{message }}
+    </div>
+    {% endif %}
+
+    {%endfor%}
+    {% endif %}
+
+    {%endwith%}
+    <hr/>
+    {% include "footer.html" %}
+</div>
+</body>
+</html>

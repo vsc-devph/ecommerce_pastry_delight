@@ -1,0 +1,127 @@
+{% include "header.html" %}
+<body class="bg-light">
+
+<div class="container mt-5 w-100">
+    <div class="d-flex justify-content-center">
+        {% with messages = get_flashed_messages(with_categories=true)%}
+        {% if messages %}
+        {% for category, message in messages %}
+        {% if category == "success" %}
+        <div class="alert alert-success bg-success text-white mt-3 fs-6 text-center" role="alert">
+            {{ message }}
+        </div>
+        {% endif %}
+
+
+        {% if category == "error" %}
+        <div class="alert alert-danger mt-3 fs-6 text-center" role="alert">
+            {{message }}
+        </div>
+        {% endif %}
+
+        {%endfor%}
+        {% endif %}
+
+        {%endwith%}
+        <div class="row">
+
+            <div class="text-dark p-3 bg-warning fw-bold fs-6">
+                <div class="d-flex justify-content-between">
+                    <h3 class="text-sm-start">Reference # {{ order[0].order_num }}</h3>
+                    <span class="bg-secondary text-white rounded p-2 ">{{ order[0].order_status }}</span>
+                </div>
+            </div>
+            <div class="bg-white border border-3 border-warning p-3">
+                <div>
+                    <div>
+                        <i class="bi bi-person-fill"></i>
+                        {{ order[0].order_by }}
+                    </div>
+                    <div class="mb-2 text-dark">
+                        <i class="bi bi-pin-map-fill"></i> {{ order[0].address }}, {{ order[0].country }}
+                        {{ order[0].postal_code }}
+                    </div>
+                    <div class="mb-2 text-dark fs-7">
+                        <i class="bi bi-telephone-outbound-fill"></i> {{ order[0].contact_no }}
+                    </div>
+                </div>
+                <hr/>
+                <div class="p-2">
+                    <table class="table bg-white fs-6">
+                    <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th class="text-sm-end">Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for line in order %}
+                    <tr>
+                        <td>
+                            <div class="d-flex justify-content-start">
+                                <div class="d-flex justify-content-start align-items-center me-3">
+                                    <img id="card_item_img"
+                                         src="{{ url_for('static', filename='images/products/'+line.img_path) }}"
+                                         class="cart_img"/>
+                                </div>
+                                <div class="">
+                                    <h6>{{ line.product_desc }}</h6>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ line.quantity|int }}</td>
+                        <td>{{ line.price }}</td>
+                        <td>
+                            <div class="d-flex justify-content-end">
+                                <div>
+                                    <span class="me-1 fs-5 text-muted fw-bold">Php</span>
+                                    <span id="cart_item_price"
+                                          class="text-muted fw-bold">{{ line.line_price }}</span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="fw-bold fs-6">
+                        <td colspan="3" class="text-muted">Subtotal</td>
+                        <td class="text-sm-end">
+                            <span class="me-1 fs-5 text-muted fw-bold">Php</span>
+                            {{ '%0.2f' % order[0].subtotal|float }}
+                        </td>
+                    </tr>
+                    <tr class="fw-bold fs-6 text-muted">
+                        <td colspan="3" class="text-muted">Discount</td>
+                        <td class="text-sm-end">
+                            <span class="me-1 fs-5 text-muted fw-bold">Php</span>
+                            {{ '%0.2f' % order[0].discount_total|float }}
+                        </td>
+                    </tr>
+
+                    <tr class="fw-bold fs-6 ">
+                        <td colspan="3" class="">Total</td>
+                        <td class="text-sm-end fs-3 text-danger">
+
+                            <span class="me-1 fs-5 text-muted fw-bold">Php</span>
+                            {{ '%0.2f' % order[0].total|float }}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+            <hr/>
+            <div>
+                <a href="{{ url_for('order_list') }}"
+                   class="btn btn-warning  fw-bold">
+                    <i class="bi bi-card-list me-2"></i> Back to Orders
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+{% include "footer.html" %}

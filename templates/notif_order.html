@@ -1,0 +1,67 @@
+<body style="font-family: 'Segoe UI',Arial,sans-serif">
+
+<img src="cid:image1" >
+<div style="font-weight:700;">
+    <div>
+        <h3>Reference # {{ order_num }}
+            <span>{{ order_status }}</span>
+        </h3>
+    </div>
+</div>
+<div >
+    <div>
+        <div>
+            Customer: {{ order_by }}
+        </div>
+        <div >
+            Address: {{ address }}
+        </div>
+        <div>
+            Contact No: {{ contact_no }}
+        </div>
+    </div>
+    <hr/>
+    <div >
+        <table style="border-bottom: 1px solid #e5e5e5; border-collapse: collapse; width:60%">
+            <thead>
+            <tr>
+                <th>Item</th>
+                <th >Price</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ items }}
+            <tr style="font-weight:bold">
+                <td style="color:#555;">Subtotal</td>
+                <td style="text-align:right">
+                    <span style="margin-left:3px; color:#555; font-weight:700; ">Php</span>
+                    {{ subtotal }}
+                </td>
+            </tr>
+            <tr style="font-weight:bold">
+                <td style="color:#555;">Discount</td>
+                <td style="text-align:right; color:#777">
+                    <span style="margin-left:3px; color:#555; font-weight:700; ">Php</span>
+                    {{ discount_total }}
+                </td>
+            </tr>
+
+            <tr style="font-weight:bold">
+                <td >Total</td>
+                <td style=" font-size: 2rem !important; text-align:right" >
+
+                    <span style="margin-left:3px; color:#555; font-weight:700; ">Php</span>
+                    {{ total }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<hr/>
+
+<div style="margin-top:50px; font-size:10px">
+================================================================<br/>
+Do not reply. This is an auto generated email.
+</div>
+</body>

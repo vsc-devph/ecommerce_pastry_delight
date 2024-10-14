@@ -1,0 +1,15 @@
+Bootstrap_Flask
+Flask_CKEditor
+WTForms
+Flask_WTF
+Werkzeug
+Flask
+flask_sqlalchemy
+SQLAlchemy
+Flask_Login
+gunicorn
+psycopg2-binary
+email_validator
+python-dotenv
+pycountry
+stripe

@@ -1,0 +1,12 @@
+#Environment Variables
+.env
+#SQL DB
+ecommerce.db
+samp_item.sql
+#Runtime Pycharm Workspace
+.idea/
+# Virtual Environment
+venv/
+# Python Bytecode Cache
+__pycache__/
+*.py[cod]

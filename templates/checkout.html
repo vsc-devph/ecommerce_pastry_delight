@@ -1,0 +1,153 @@
+{% include "header.html" %}
+<body class="bg-light">
+<main class="h-100">
+    <div class="d-flex justify-content-center align-items-center mt-5 pb-3">
+    </div>
+
+    <div class="container mb-5 ">
+        {% with messages = get_flashed_messages(with_categories=true)%}
+        {% if messages %}
+        {% for category, message in messages %}
+        {% if category == "success" %}
+        <div class="alert alert-success bg-success text-white mt-3 fs-6 text-center" role="alert">
+            {{ message }}
+        </div>
+        {% endif %}
+
+
+        {% if category == "error" %}
+        <div class="alert alert-danger mt-3 fs-6 text-center" role="alert">
+            {{message }}
+        </div>
+        {% endif %}
+
+        {%endfor%}
+        {% endif %}
+
+        {%endwith%}
+        {% if cart %}
+        <form method="post">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-start align-items-center">
+                        <!--                        <img class="logo pb-2" alt="Pastry Delight" src="{{ url_for('static', filename='images/pastrydelight.png') }}">-->
+                        <h3 class="text-sm-start"><i class="bi bi-file-post"></i> Checkout</h3>
+                    </div>
+                    <table class="table bg-white border-3 border-secondary border fs-6">
+                        <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th class="text-sm-end">Subtotal</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in cart %}
+                        <tr>
+                            <td>
+                                <div class="d-flex justify-content-start">
+                                    <div class="d-flex justify-content-start align-items-center me-3">
+                                        <img id="card_item_img"
+                                             src="{{ url_for('static', filename='images/products/'+item.img_path) }}"
+                                             class="cart_img"/>
+                                    </div>
+                                    <div class="">
+                                        <h6 id="cart_item_name">{{ item.name }}</h6>
+                                        <div id="cart_item_desc" class=" fs-6">{{ item.description}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ item.qty }}</td>
+                            <td>{{ item.price }}</td>
+                            <td>
+                                <div class="d-flex justify-content-end">
+                                    <div>
+                                        <span class="me-1 fs-5 text-muted fw-bold">Php</span>
+                                        <span id="cart_item_price"
+                                              class="text-muted fw-bold">{{ item.price*item.qty }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="fw-bold fs-6">
+                            <td colspan="3">Subtotal</td>
+                            <td class="text-sm-end">
+                                <span class="me-1 fs-5 text-muted fw-bold">Php</span>
+                                {{ '%0.2f' % order.subtotal|float }}
+                            </td>
+                        </tr>
+                        <tr class="fw-bold fs-6 text-muted">
+                            <td colspan="3">Discount</td>
+                            <td class="text-sm-end">
+                                <span class="me-1 fs-5 text-muted fw-bold">Php</span>
+                                {{ '%0.2f' % order.discount|float }}
+                            </td>
+                        </tr>
+
+                        <tr class="fw-bold fs-6 ">
+                            <td colspan="3" class="text-muted">Total</td>
+                            <td class="text-sm-end fs-3 text-danger">
+
+                                <span class="me-1 fs-5 text-muted fw-bold">Php</span>
+                                {{ '%0.2f' % order.total|float }}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="row">
+                        <a href="{{ url_for('my_cart') }}" class="btn btn-link d-flex justify-content-start fw-bold">
+                            <i class="bi bi-cart-fill"></i>&nbsp;Back to Cart
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+
+                    <div class="border-warning bg-white text-dark p-3 border border-3 fw-bold fs-6">
+                        <div class="mb-2">
+                            {{ form.address.label }}
+                            <hr/>
+                            {{ form.address(value=user.address,class_="form-control") }}
+                        </div>
+                        <div class="input-group mb-2">
+                            {{ form.country.label(class_="input-group-text") }}
+                            {{ form.country(value=user.country,class_="form-select") }}
+                        </div>
+                        <div class="input-group mb-2">
+                            {{ form.postal_code.label(class_="input-group-text") }}
+                            {{ form.postal_code(value=user.postal_code,class_="form-control") }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <input class="border-0 btn-md btn btn-warning mt-3" id="submit_btn"
+                               name="submit_btn"
+                               type="submit"
+                               value="Place Order">
+
+                    </div>
+                </div>
+            </div>
+
+
+        </form>
+        {% else %}
+        <div class="d-flex align-items-start justify-content-center vh-50">
+            <div class="alert alert-secondary fs-6 text-center" role="alert">
+                There are no items in your cart.
+            </div>
+        </div>
+
+        <div class="row">
+            <a href="{{ url_for('my_cart') }}" class="btn btn-link d-flex justify-content-center fw-bold">
+                <i class="bi bi-cart-fill"></i>&nbsp;Back to Cart
+            </a>
+        </div>
+        {% endif%}
+
+    </div>
+
+</main>
+</body>
+{% include "footer.html" %}

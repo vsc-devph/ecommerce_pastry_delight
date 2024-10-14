@@ -1,0 +1,39 @@
+<div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark vh-100"  >
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <i class="bi bi-lock me-2"></i>
+        <span class="fs-4 fw-bold">ADMIN</span>
+    </a>
+    <hr>
+    <ul class="nav nav-pills flex-column mb-auto fw-bold fs-6">
+        <li class="nav-item">
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-link text-white {% if '/admin_dashboard' in request.path %}active{%
+            endif %}" aria-current="page" >
+                <i class="bi bi-calendar"></i>
+                Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('admin_order') }}"
+               class="nav-link text-white {% if '/admin_order' in request.path or '/admin_order_details' in request.path %} active{% endif %}"
+               {% if '/admin_order' in request.path %} aria-current="page" {%
+            endif %}>
+            <i class="bi bi-card-list"></i>
+            Orders
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('admin_product') }}" class="nav-link text-white {% if '/admin_product' in request.path %}active{%
+            endif %}" {% if '/admin_product' in request.path %} aria-current="page" {%endif %}>
+            <i class="bi bi-postcard"></i>
+            Products
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('admin_user') }}" class="nav-link text-white {% if '/admin_user' in request.path %} active {% endif %}" {% if
+            '/admin_user' in request.path %} aria-current="page" {% endif %}>
+            <i class="bi bi-person-vcard"></i>
+            Users
+            </a>
+        </li>
+    </ul>
+</div>
