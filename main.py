@@ -56,6 +56,9 @@ def admin_only(f):
 
     return decorated_function
 
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html', now=DATE_NOW), 404
 
 @app.route("/", methods=["GET", "POST"])
 def home():

@@ -10940,6 +10940,12 @@ header.masthead .post-heading .meta a {
     width:100%;
     max-width:500px;
 }
+.container_404{
+    padding:3rem 3rem 1rem 3rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    min-width:800px;
+    max-width:1000px;
+}
 .link{
     color: #0085A1;
     font-size:1rem;
@@ -10949,6 +10955,14 @@ header.masthead .post-heading .meta a {
     height:50px;
 }
 
+.logo_horizontal:hover{
+    background-color:#fff;
+    border-radius: 30px;
+}
+
+.img_80{
+    width:80%
+}
 .img_50{
     width:50%
 }
