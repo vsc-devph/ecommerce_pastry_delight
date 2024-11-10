@@ -261,7 +261,7 @@ class DBInit():
             product_update.status = "ACTIVE"
         self.db.session.commit()
 
-    def product_best_selling(self,limit):
+    def product_best_selling(self, limit):
         query = """
             SELECT order_line.product_id , product.code,order_line.product_desc, 
             SUM(order_line.quantity) as total_qty
@@ -275,12 +275,11 @@ class DBInit():
             ORDER BY  SUM(order_line.quantity) DESC
         """
         limit = f" LIMIT {limit}"
-        result = db.session.execute(text(query+limit))
+        result = db.session.execute(text(query + limit))
         rows = result.fetchall()
         column_names = result.keys()  # Get the column names
         data = [dict(zip(column_names, row)) for row in rows]
         return data
-
 
     ##PRODUCT CATEGORY
     def get_product_categories(self):
@@ -292,6 +291,22 @@ class DBInit():
             db.select(ProductCategory).where(ProductCategory.id == id).order_by(ProductCategory.name)).scalar()
         return record
 
+    def get_product_category_by(self, keyword):
+        if keyword == "":
+            record_list = self.db.session.execute(
+                db.select(ProductCategory).order_by(ProductCategory.name)).scalars().all()
+
+        else:
+            record_list = (self.db.session.execute(
+                db.select(ProductCategory).where(ProductCategory.name.like(keyword)).order_by(ProductCategory.name))
+                      .scalars().all())
+        return record_list
+
+    def get_product_category_name(self, name):
+        record = self.db.session.execute(
+            db.select(ProductCategory).where(ProductCategory.name == name).order_by(ProductCategory.name)).scalar()
+        return record
+
     def add_category(self, details):
         with self.app.app_context():
             new_categ = ProductCategory(
@@ -299,6 +314,20 @@ class DBInit():
                 status='ACTIVE')
             self.db.session.add(new_categ)
             self.db.session.commit()
+
+    def product_category_change_stat(self, category_id):
+        category_update = self.get_product_category(category_id)
+        if category_update.status == "ACTIVE":
+            category_update.status = "DEACTIVATED"
+        else:
+            category_update.status = "ACTIVE"
+        self.db.session.commit()
+
+    def update_product_category(self, details, category_id):
+        category_update = self.get_product_category(category_id)
+        if 'name' in details:
+            category_update.name = details['name']
+        self.db.session.commit()
 
     ##USER
     def get_user_details(self, user_id):
@@ -338,15 +367,14 @@ class DBInit():
             user_to_update.status = "ACTIVE"
         self.db.session.commit()
 
-
-    def update_user(self, user_id,details:User):
+    def update_user(self, user_id, details: User):
         user_to_update = self.get_user_details(user_id)
         if details.email:
             user_to_update.email = details.email
         if details.fname:
             user_to_update.fname = details.fname
         if details.mname:
-            user_to_update.mname= details.mname
+            user_to_update.mname = details.mname
         if details.lname:
             user_to_update.lname = details.lname
         if details.contact_no:
@@ -417,7 +445,7 @@ class DBInit():
         order.completion_date = func.now()
         self.db.session.commit()
 
-    def update_to_paid_order(self, id,**stripe_session):
+    def update_to_paid_order(self, id, **stripe_session):
         order = self.get_order(id)
         order.status = 'PAID'
         order.paid_date = func.now()
@@ -425,8 +453,7 @@ class DBInit():
             order.stripe_session_id = stripe_session
         self.db.session.commit()
 
-
-    def update_stripe_order(self, id,stripe_session):
+    def update_stripe_order(self, id, stripe_session):
         order = self.get_order(id)
         if stripe_session:
             order.stripe_session_id = stripe_session

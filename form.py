@@ -27,6 +27,10 @@ class SearchForm(FlaskForm):
     keyword = StringField('Keyword')
     submit_btn = SubmitField('Search',render_kw={'class':'btn-sm btn-dark'})
 
+class NewDescriptionForm(FlaskForm):
+    description = StringField('Description', validators=[DataRequired()])
+    submit_btn = SubmitField('Submit',render_kw={'class':'btn-sm btn-dark'})
+
 class ProductSearchForm(FlaskForm):
     keyword = StringField('Keyword')
     category = SelectField('Category')

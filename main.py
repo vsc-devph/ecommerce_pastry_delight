@@ -3,7 +3,7 @@ from email.mime.image import MIMEImage
 
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session
 from flask_bootstrap import Bootstrap5
-from form import ProductForm, ProductSearchForm, RegisterForm, LoginForm,ProfileForm, AddtoCartForm, CheckoutForm, SearchForm,ForgotPassForm
+from form import *
 from werkzeug.utils import secure_filename
 from functools import wraps
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
@@ -56,9 +56,11 @@ def admin_only(f):
 
     return decorated_function
 
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html', now=DATE_NOW), 404
+
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -176,23 +178,21 @@ def forgot_pass():
 
     if form.validate_on_submit():
         email = form.email.data
-        user = db_connect.get_user(**{'email':email})
+        user = db_connect.get_user(**{'email': email})
         if not user:
-            flash ('We do not recognize this account. Please check and try again.','error')
+            flash('We do not recognize this account. Please check and try again.', 'error')
         else:
-            flash('We have sent instructions to your email. Please check your inbox to login.','success')
+            flash('We have sent instructions to your email. Please check your inbox to login.', 'success')
             reset_password(user.id)
-
 
     return render_template("forgot_pass.html", form=form, now=DATE_NOW)
 
+
 @app.route('/login/profile', methods=["GET", "POST"])
 def profile():
-
     if not current_user.is_authenticated:
-        flash ('Please login first.','error')
-        return  redirect(url_for('login'))
-
+        flash('Please login first.', 'error')
+        return redirect(url_for('login'))
 
     form = ProfileForm()
     if request.method == "GET":
@@ -210,23 +210,21 @@ def profile():
         if form.password.data != current_user.password:
             password = form.password.data
 
-
         encrypt_password = generate_password_hash(password, method="pbkdf2:sha256",
                                                   salt_length=8)
-        details=model.User(
+        details = model.User(
             lname=form.lname.data,
             fname=form.fname.data,
             mname=form.mname.data,
             email=form.email.data,
             contact_no=form.contact_no.data,
             address=form.address.data,
-            postal_code =form.postal_code.data,
-            country = form.country.data,
-            password= encrypt_password
+            postal_code=form.postal_code.data,
+            country=form.country.data,
+            password=encrypt_password
         )
-        db_connect.update_user(current_user.id,details)
-        flash("Profile changes saved succesfully.",'success')
-
+        db_connect.update_user(current_user.id, details)
+        flash("Profile changes saved succesfully.", 'success')
 
     return render_template("profile.html", form=form, now=DATE_NOW)
 
@@ -428,19 +426,21 @@ def checkout():
             )
             item_details.append(item_line)
 
-        #INSERT DETAILS TO DATABASE
+        # INSERT DETAILS TO DATABASE
         new_order_id = db_connect.add_order(new_order, item_details)
         if new_order_id > 0:
-            #REMOVE ITEMS IN CART AND ORDER DETAILS
+            # REMOVE ITEMS IN CART AND ORDER DETAILS
             session.pop('order')
             session.pop('cart')
 
-            #SEND ORDER NOTIF
+            # SEND ORDER NOTIF
             new_order_details = db_connect.get_order(new_order_id)
-            html_content= mail_order_template(new_order_id)
-            send_notif(current_user.email, f"Pastry Delight: Order {new_order_details.order_num} - {new_order_details.status}", html_content)
+            html_content = mail_order_template(new_order_id)
+            send_notif(current_user.email,
+                       f"Pastry Delight: Order {new_order_details.order_num} - {new_order_details.status}",
+                       html_content)
 
-            #CREATE STRIPE SESSION
+            # CREATE STRIPE SESSION
             stripe_resp = payment_api(new_order_id)
             if stripe_resp:
                 db_connect.update_stripe_order(new_order_id, stripe_resp["id"])
@@ -448,6 +448,7 @@ def checkout():
                 return redirect(stripe_resp["url"])
 
     return render_template("checkout.html", form=form, cart=cart, order=order, user=user, now=DATE_NOW)
+
 
 def retrieve_payment_api(order_id):
     order = db_connect.get_order(order_id)
@@ -537,7 +538,8 @@ def mail_order_template(order_id):
     html_content = html_content.replace("{{ order_num }}", order[0]['order_num'])
     html_content = html_content.replace("{{ order_status }}", order[0]['order_status'])
     html_content = html_content.replace("{{ order_by }}", order[0]['order_by'])
-    html_content = html_content.replace("{{ address }}",order[0]['address'] + " " + order[0]['country'] + " " + order[0]['postal_code'])
+    html_content = html_content.replace("{{ address }}",
+                                        order[0]['address'] + " " + order[0]['country'] + " " + order[0]['postal_code'])
     html_content = html_content.replace("{{ contact_no }}", order[0]['contact_no'])
     lines = ""
     for line in order:
@@ -546,10 +548,10 @@ def mail_order_template(order_id):
         lines = lines + f"<td style='text-align:right'>{line['line_price']}</td>"
         lines = lines + "</tr>"
 
-    html_content = html_content.replace("{{ items }}",lines)
-    html_content = html_content.replace("{{ subtotal }}",str(order[0]['subtotal']))
-    html_content = html_content.replace("{{ discount_total }}",str(order[0]['discount_total']))
-    html_content = html_content.replace("{{ total }}",str(order[0]['total']))
+    html_content = html_content.replace("{{ items }}", lines)
+    html_content = html_content.replace("{{ subtotal }}", str(order[0]['subtotal']))
+    html_content = html_content.replace("{{ discount_total }}", str(order[0]['discount_total']))
+    html_content = html_content.replace("{{ total }}", str(order[0]['total']))
 
     return html_content
 
@@ -597,14 +599,11 @@ def cancel_order(order_id):
         return redirect(url_for('order_list'))
 
     db_connect.update_to_cancel_order(order_id)
-    flash(f"Order #{order.order_num} successfully cancelled.","success")
+    flash(f"Order #{order.order_num} successfully cancelled.", "success")
 
     html_content = mail_order_template(order_id)
-    send_notif(current_user.email,f"Pastry Delight: Order {order.order_num} - {order.status}",html_content)
+    send_notif(current_user.email, f"Pastry Delight: Order {order.order_num} - {order.status}", html_content)
     return redirect(url_for('order_list'))
-
-
-
 
 
 @app.route("/order_details/<int:order_id>", methods=["GET", "POST"])
@@ -655,14 +654,14 @@ def open_stripe_link(order_id):
     stripe_resp = retrieve_payment_api(order_id)
     if stripe_resp:
         if stripe_resp["url"]:
-            db_connect.update_stripe_order(order_id,stripe_resp["id"])
+            db_connect.update_stripe_order(order_id, stripe_resp["id"])
             return redirect(stripe_resp["url"])
         else:
             db_connect.update_to_cancel_order(order_id)
-            flash("Payment session expired. Please place a new order instead.","error")
+            flash("Payment session expired. Please place a new order instead.", "error")
             return redirect(url_for('order_list'))
     else:
-        flash("Unknown error occured.","error")
+        flash("Unknown error occured.", "error")
         return redirect(url_for('order_list'))
 
 
@@ -907,6 +906,139 @@ def admin_product_status(product_id):
     return redirect(url_for('admin_product'))
 
 
+@app.route("/admin_prodcategory", methods=["GET", "POST"])
+@admin_only
+def admin_product_category():
+    if not current_user.is_authenticated:
+        flash('Please log in first to show products.', 'error')
+        return redirect(url_for('login'))
+
+    user_access = db_connect.get_user_access(**{'user_id': current_user.id, 'user_group_id': 1})
+    if not user_access:
+        flash("Product catalog inaccessible.", 'error')
+        return redirect(url_for('home'))
+
+    form = SearchForm()
+    new_form = NewDescriptionForm()
+
+    categories = db_connect.get_product_category_by(keyword="")
+    if form.validate_on_submit():
+
+        keyword = f"%{form.keyword.data}%"
+
+        categories = db_connect.get_product_category_by(keyword)
+        if len(categories) == 0:
+            flash("Category not found.", "error")
+    return render_template("admin_products_category.html", categories=categories, form=form, new_form=new_form,
+                           is_admin=True, now=DATE_NOW)
+
+
+@app.route("/admin_prodcategory_status/<int:category_id>", methods=["GET", "POST"])
+@admin_only
+def admin_product_category_status(category_id):
+    if not current_user.is_authenticated:
+        flash('Please log in first to show categories.', 'error')
+        return redirect(url_for('login'))
+
+    user_access = db_connect.get_user_access(**{'user_id': current_user.id, 'user_group_id': 1})
+    if not user_access:
+        flash("Categories inaccessible.", 'error')
+        return redirect(url_for('home'))
+
+    categ_exist = db_connect.get_product_category(category_id)
+    if categ_exist:
+        new_status = 'ACTIVE'
+        if categ_exist.status == 'ACTIVE':
+            new_status = 'INACTIVE'
+        db_connect.product_category_change_stat(category_id)
+        flash(f"Category status changed to {new_status}!", "success")
+    else:
+        flash("Invalid category!", "error")
+    return redirect(url_for('admin_product_category'))
+
+
+@app.route("/admin_product/category_add", methods=["GET", "POST"])
+@admin_only
+def admin_product_category_add():
+    if not current_user.is_authenticated:
+        flash('Please log in first to view categories.', 'error')
+        return redirect(url_for('login'))
+
+    user_access = db_connect.get_user_access(**{'user_id': current_user.id, 'user_group_id': 1})
+    if not user_access:
+        flash("Product category is inaccessible.", 'error')
+        return redirect(url_for('home'))
+
+    form = NewDescriptionForm()
+
+    if form.validate_on_submit():
+
+        add_product = True
+        categ_exist = db_connect.get_product_category_name(form.description.data)
+        if categ_exist:
+            flash("Category with same description already exists!", "error")
+            add_product = False
+
+        if add_product:
+
+            db_connect.add_category({'name': form.description.data})
+
+            categ_added = db_connect.get_product_category_name(form.description.data)
+            if categ_added:
+                flash("Product added successfully!", "success")
+    return redirect(url_for('admin_product_category'))
+
+@app.route("/admin_prodcategory_update/<int:category_id>", methods=["GET", "POST"])
+@admin_only
+def admin_product_category_update(category_id):
+    if not current_user.is_authenticated:
+        flash('Please log in first to show categories.', 'error')
+        return redirect(url_for('login'))
+
+    user_access = db_connect.get_user_access(**{'user_id': current_user.id, 'user_group_id': 1})
+    if not user_access:
+        flash("Categories inaccessible.", 'error')
+        return redirect(url_for('home'))
+
+    categ_exist = db_connect.get_product_category(category_id)
+    if categ_exist:
+
+        form = NewDescriptionForm()
+
+        if form.validate_on_submit():
+            details = {
+                'name':form.description.data
+            }
+            description_exists =  db_connect.get_product_category_name(form.description.data)
+            if description_exists:
+                flash(f"Category with same description already exists!", "error")
+            else:
+                db_connect.update_product_category(details,category_id)
+                flash(f"Category updated!", "success")
+    else:
+        flash("Invalid category!", "error")
+    return redirect(url_for('admin_product_category'))
+
+@app.route("/admin_get_category_json/<int:category_id>", methods=["GET"])
+def admin_get_category_json(category_id):
+    if not current_user.is_authenticated:
+        flash('Please log in first to show categories.', 'error')
+        return redirect(url_for('login'))
+
+    user_access = db_connect.get_user_access(**{'user_id': current_user.id, 'user_group_id': 1})
+    if not user_access:
+        flash("Categories inaccessible.", 'error')
+        return redirect(url_for('home'))
+
+    categ_exist = db_connect.get_product_category(category_id)
+
+    details = {
+        'name': categ_exist.name,
+        'status': categ_exist.status,
+    }
+
+    return jsonify(details)
+
 @app.route("/admin_user", methods=["GET", "POST"])
 @admin_only
 def admin_user():
@@ -977,7 +1109,7 @@ def reset_password(user_id):
 
         html_content = html_content.replace("[name]", user_exist.fname)
         html_content = html_content.replace("[new_password]", random_password)
-        html_content = html_content.replace("{{ login_url }}", current_host+url_for('login'))
+        html_content = html_content.replace("{{ login_url }}", current_host + url_for('login'))
         send_notif(user_exist.email, "Pastry Delight: Password Reset", html_content)
 
 

@@ -52,4 +52,26 @@ $("button").click(function () {
         });
     }
 
+
+    if (target.indexOf("editcategory_") >= 0){
+        target_id = target.replace("editcategory_", "")
+
+        frm_action = $("#frm_edit").attr("action")
+        url_action = frm_action.split("/")
+        last_id = url_action[url_action.length-1]
+        new_action = frm_action.replace(last_id,target_id)
+        $("#frm_edit").attr("action",new_action)
+
+        get_category_link = new_action.replace("admin_prodcategory_update","admin_get_category_json")
+        $.ajax({
+            url: get_category_link,
+            data: { category_id: target_id },
+            type: "GET",
+            success: function (data) {
+                $("span#edit_category_name").text(data.name)
+                 $("#editcategory_description").val(data.name)
+            }
+        });
+    }
+
 });

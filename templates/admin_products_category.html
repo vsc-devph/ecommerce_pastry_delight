@@ -1,0 +1,194 @@
+{% include "header.html" %}
+{% from "bootstrap5/form.html" import render_form %}
+<main>
+
+    <div class="row">
+        <div class="col-md-2">
+            {% include "admin_sidebar.html" %}
+        </div>
+
+        <div class="col-md-10 px-5 mt-3">
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h1 class="mt-3">Products Category</h1>
+                <a href="" class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                   data-bs-target="#newcategory">
+                    <i class="bi bi-plus-circle"></i> New Category
+                </a>
+            </div>
+
+            <div class="border border-1 border-secondary bg-light my-3 p-3">
+                <h6>Search Category</h6>
+                <hr/>
+                <div class="fs-7">
+                    <form class="form" method="post">
+
+                        {{ form.csrf_token }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group row align-items-center">
+                                    {{ form.keyword.label(class_="col-sm-2 ") }}
+                                    <div class="col-sm-4">
+                                        {{ form.keyword(class_="w-100 form-control") }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button type="submit" class="btn btn-sm btn-dark">Search</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true)%}
+            {% if messages %}
+            {% for category, message in messages %}
+            {% if category == "success" %}
+            <div class="alert alert-success mt-3 fs-6" role="alert">
+                 <i class="bi bi-check-circle-fill"></i>  {{ message }}
+            </div>
+            {% endif %}
+
+
+            {% if category == "error" %}
+            <div class="alert alert-danger mt-3 fs-6" role="alert">
+                 <i class="bi bi-exclamation-octagon-fill"></i> {{message }}
+            </div>
+            {% endif %}
+
+            {%endfor%}
+            {% endif %}
+
+            {%endwith%}
+
+            <div class="col-md-6">
+                <hr/>
+                <table class="table table-hover table-bordered fs-6">
+                    <thead class="table-dark">
+                    <tr>
+                        <th></th>
+                        <th>Description</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% if categories|length == 0 %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="alert alert-secondary mt-3 fs-6" role="alert">
+                                No records found
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    {% for categ in categories:%}
+                    <tr>
+                        <td>
+                            <button data-bs-toggle="modal" id="editcategory_{{ categ.id }}"
+                               data-bs-target="#editcategory" class="btn btn-sm">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                        </td>
+                        <td>{{ categ.name }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_product_category_status',category_id=categ.id) }}"
+                               class="fw-bold btn btn-sm btn-light {% if categ.status == 'ACTIVE'   %}text-success
+                               {% else %} text-danger {% endif %}"
+                               data-toggle="tooltip" data-placement="right"
+                               title="{% if categ.status == 'ACTIVE' %}  ENABLED {% else %} DISABLED  {% endif %}"
+                            >
+                                {% if categ.status == 'ACTIVE' %}
+                                <i class="bi bi-eye"></i>
+                                {% else %}
+                                <i class="bi bi-eye-slash"></i>
+                                {% endif %}
+                            </a>
+                            {{ categ.status }}
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="newcategory" tabindex="-1" aria-labelledby="New Category" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <form id="frm_new" class="form" action="{{ url_for('admin_product_category_add',item_id=0)}}"
+                      method="post">
+                    {{ new_form.csrf_token }}
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="NewCategoryLabel">New Category </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div id="modal-body" class="modal-body">
+                        <div class="row">
+
+                            <div class="fs-6">
+                                {{ new_form.description.label }}
+                                {{ new_form.description(class_="border-1 fw-bold
+                                text-dark",value="",id="category_description",placeholder="Type here") }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-info">
+                            <i class="bi bi-check-circle-fill"></i>
+                            {{ new_form.submit_btn.label }}
+                        </button>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="editcategory" tabindex="-1" aria-labelledby="EditCategory" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <form id="frm_edit" class="form" action="{{ url_for('admin_product_category_update',category_id=0)}}"
+                      method="post">
+                    {{ new_form.csrf_token }}
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="EditCategoryTitle">Edit Category - <span id="edit_category_name"></span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div id="editcategory-body" class="modal-body">
+                        <div class="row">
+
+                            <div class="fs-6">
+                                {{ new_form.description.label }}
+                                {{ new_form.description(class_="border-1 fw-bold
+                                text-dark",value="",id="editcategory_description") }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-info">
+                            <i class="bi bi-check-circle-fill"></i>
+                            {{ new_form.submit_btn.label }}
+                        </button>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</main>
+{% include "footer.html" %}

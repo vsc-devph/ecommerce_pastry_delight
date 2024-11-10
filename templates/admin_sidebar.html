@@ -29,6 +29,13 @@
             </a>
         </li>
         <li class="nav-item">
+            <a href="{{ url_for('admin_product_category') }}" class="nav-link text-white {% if '/admin_prodcategory' in request.path %}active{%
+            endif %}" {% if '/admin_prodcategory' in request.path %} aria-current="page" {%endif %}>
+            <i class="bi bi-postcard"></i>
+            Product Category
+            </a>
+        </li>
+        <li class="nav-item">
             <a href="{{ url_for('admin_user') }}" class="nav-link text-white {% if '/admin_user' in request.path %} active {% endif %}" {% if
             '/admin_user' in request.path %} aria-current="page" {% endif %}>
             <i class="bi bi-person-vcard"></i>
