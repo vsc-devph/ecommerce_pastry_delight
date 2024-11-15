@@ -59,7 +59,7 @@
                 </div>
                 <div class="col-md-9">
                     <div class="row">
-                        {% if products %}
+                        {% if products.total > 0 %}
                         {% for product in products: %}
                         <div class="col-md-4">
                             <div id="prod{{ product.id}}" class="card mb-4 box-shadow">
@@ -90,13 +90,21 @@
                             </div>
                         </div>
                         {% endfor %}
+                        <div class="bg-light py-3 fs-6 fw-bold">
+                            {% for i in range(1,products.pages+1): %}
+                            <a href="{{ url_for('home',page=i) }}" class="btn btn-sm {% if products.page == i %}btn-dark{%else%} btn-light{%endif%}">
+                                {{ i }}
+                            </a>
 
+                            {% endfor %}
+                        </div>
                         {% else %}
                         <div class="alert alert-secondary bg-secondary text-center text-white fw-bold">
                             No products found.
                         </div>
                         {% endif %}
                     </div>
+
                 </div>
             </div>
         </div>

@@ -57,55 +57,64 @@
             <hr/>
             <table class="table fs-6 table-hover">
                 <thead>
-                    <tr>
-                        <th></th>
-                        <th>Name </th>
-                        <th>Email </th>
-                        <th>Address </th>
-                        <th>Contact No </th>
-                        <th>Register Date </th>
-                        <th></th>
-                    </tr>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Contact No</th>
+                    <th>Register Date</th>
+                </tr>
                 </thead>
                 <tbody>
                 {% if users|length == 0 %}
-                    <tr>
-                        <td colspan="6">
-                            <div class="alert alert-secondary mt-3 fs-6" role="alert">
-                                No records found
-                            </div>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6">
+                        <div class="alert alert-secondary mt-3 fs-6" role="alert">
+                            No records found
+                        </div>
+                    </td>
+                </tr>
                 {% else %}
                 {% for user in users:%}
-                    <tr>
-                        <td>
-                           <a href="{{ url_for('admin_user_status',user_id=user.id) }}"
-                               class="fw-bold btn btn-sm btn-light {% if user.status == 'ACTIVE'   %}text-success
-                               {% else %} text-danger {% endif %}"
-                               data-toggle="tooltip" data-placement="right"
-                               title="{% if user.status == 'ACTIVE' %}  ENABLED {% else %} DISABLED  {% endif %}"
-                            >
-                            {% if user.status == 'ACTIVE' %}
-                               <i class="bi bi-eye"></i>
-                            {% else %}
-                                <i class="bi bi-eye-slash"></i>
-                            {% endif %}
+                <tr class="{% if user.status != 'ACTIVE' %}bg-opacity-10 bg-danger fs-7{% endif %}">
+                    <td>
+                        <div class="dropdown ">
+                            <a class="btn btn-warning dropdown-toggle btn-sm" href="#" role="button" id="dropdownMenuLink"
+                               data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Update user">
+                                <i class="bi bi-person-fill-gear"></i>
                             </a>
-                        </td>
-                        <td>{{ user.lname }}, {{ user.fname }} {{ user.mname }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.address }}</td>
-                        <td>{{ user.contact_no }}</td>
-                        <td>{{ user.created_date }}</td>
-                        <td>
-                            <a href="{{ url_for('admin_user_resetpass',user_id = user.id) }}"
-                               data-toggle="tooltip" data-placement="right" class="btn btn-secondary btn-sm"
-                               title="Reset Password">
-                                <i class="bi bi-key-fill"></i>
-                            </a>
-                        </td>
-                    </tr>
+
+                            <div class="dropdown-menu fs-7" aria-labelledby="dropdownMenuLink">
+
+                                <a href="{{ url_for('admin_user_resetpass',user_id = user.id) }}"
+                                   data-toggle="tooltip" data-placement="right" class="dropdown-item"
+                                   title="Reset Password">
+                                    <i class="bi bi-key-fill"></i> Reset Password
+                                </a>
+                                <hr class="dropdown-divider">
+
+                                <a href="{{ url_for('admin_user_status',user_id=user.id) }}"
+                                   class="dropdown-item {% if user.status == 'ACTIVE' %}  text-danger {% else %} text-warning fw-bold {% endif %}"
+                                   data-toggle="tooltip" data-placement="right"
+                                   title="Currently{% if user.status == 'ACTIVE' %} active {% else %} No Access/Disabled  {% endif %}"
+                                >
+                                    {% if user.status == 'ACTIVE' %}
+                                    <i class="bi bi-eye"></i> Disable User
+                                    {% else %}
+                                    <i class="bi bi-eye-slash"></i> Activate User
+                                    {% endif %}
+
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.lname }}, {{ user.fname }} {{ user.mname }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.address }}</td>
+                    <td>{{ user.contact_no }}</td>
+                    <td>{{ user.created_date }}</td>
+                </tr>
                 {% endfor %}
                 {% endif %}
                 </tbody>

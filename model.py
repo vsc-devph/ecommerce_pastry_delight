@@ -1,5 +1,4 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, ForeignKey, DateTime, Float
 from sqlalchemy.sql import func, collate
@@ -176,6 +175,7 @@ class DBInit():
             'discount_code': '',
             'total': 0
         }
+        self.records_per_page = 3
         self.db.init_app(self.app)
         self.create_table()
 
@@ -209,21 +209,25 @@ class DBInit():
                 connection.execute(text(view_creation_query))
 
     ##PRODUCTS
-    def get_products(self, keyword, **where_cond):
+    def get_products(self, keyword,limit, **where_cond):
         if where_cond:
             if keyword != "":
 
                 keyword = f"%{keyword}%"
                 record_list = Product.query.filter_by(**where_cond).where(
                     or_(Product.name.like(keyword), Product.code.like(keyword), Product.description.like(keyword),
-                        Product.remarks.like(keyword))).order_by(Product.name.asc()).all()
+                        Product.remarks.like(keyword))).order_by(Product.name.asc()).paginate(page=limit, per_page=self.records_per_page)
             else:
 
-                record_list = Product.query.filter_by(**where_cond).order_by(Product.name.asc()).all()
+                record_list = (Product.query.filter_by(**where_cond).order_by(Product.name.asc())
+                               .paginate(page=limit, per_page=self.records_per_page))
 
         else:
-            record_list = self.db.session.execute(
-                db.select(Product).order_by(collate(Product.name, 'NOCASE'))).scalars().all()
+            record_list = Product.query.filter_by(**where_cond).where(
+                or_(Product.name.like(keyword), Product.code.like(keyword), Product.description.like(keyword),
+                    Product.remarks.like(keyword))).order_by(Product.name.asc()).paginate(page=limit,
+                                                                                          per_page=self.records_per_page)
+
         return record_list
 
     def get_product_details(self, where_cond):

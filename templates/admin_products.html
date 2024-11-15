@@ -79,7 +79,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% if products|length == 0 %}
+                    {% if products.total == 0 %}
                     <tr>
                         <td colspan="6">
                             <div class="alert alert-secondary mt-3 fs-6" role="alert">
@@ -89,37 +89,71 @@
                     </tr>
                     {% else %}
                     {% for product in products:%}
-                    <tr>
+                    <tr class="{% if product.status != 'ACTIVE' %}bg-opacity-10 bg-danger fs-7{% endif %}">
                         <td>
-                            <a href="{{ url_for('admin_product_update',product_id=product.id) }}"><i
-                                    class="bi bi-pencil-square"></i></a>
-                            <a href="{{ url_for('admin_product_status',product_id=product.id) }}"
-                               class="fw-bold btn btn-sm btn-light {% if product.status == 'ACTIVE'   %}text-success
-                               {% else %} text-danger {% endif %}"
-                               data-toggle="tooltip" data-placement="right"
-                               title="{% if product.status == 'ACTIVE' %}  ENABLED {% else %} DISABLED  {% endif %}"
-                            >
-                                {% if product.status == 'ACTIVE' %}
-                                <i class="bi bi-eye"></i>
+                            <div class="dropdown ">
+                                <a class="btn btn-warning dropdown-toggle btn-sm" href="#" role="button"
+                                   id="dropdownMenuLink"
+                                   data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                   title="Update product">
+                                    <i class="bi bi-gear-fill"></i>
+                                </a>
+
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                    <a href="{{ url_for('admin_product_update',product_id=product.id) }}"
+                                       class="dropdown-item fs-7" title="Update Details">
+                                        <i class="bi bi-pencil-square"></i>
+                                        Update Details
+                                    </a>
+
+                                    <hr class="dropdown-divider">
+                                    <a href="{{ url_for('admin_product_status',product_id=product.id) }}"
+                                       class="dropdown-item fs-7 {% if product.status == 'ACTIVE' %} text-danger {% else %} text-warning fw-bold {% endif %}"
+                                       data-toggle="tooltip" data-placement="right"
+                                       title="Currently{% if product.status == 'ACTIVE' %}  Enabled {% else %} DISABLED  {% endif %}"
+                                    >
+                                        {% if product.status == 'ACTIVE' %}
+                                        <i class="bi bi-eye"></i> Disable Product
+                                        {% else %}
+                                        <i class="bi bi-eye-slash"></i> Activate Product
+                                        {% endif %}
+                                    </a>
+                                </div>
+                            </div>
+
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_product_update',product_id=product.id) }}">
+                                {% if product.img_path: %}
+                                <img src="{{ url_for('static', filename='images/products/'+product.img_path) }}"
+                                     class="img-thumbnail_50"/>
                                 {% else %}
-                                <i class="bi bi-eye-slash"></i>
+                                <img src="{{ url_for('static', filename='images/products/cupcake.png') }}"
+                                     class="img-thumbnail_50"/>
                                 {% endif %}
                             </a>
-                        </td>
-                        <td>{% if product.img_path: %}
-                            <img src="{{ url_for('static', filename='images/products/'+product.img_path) }}"
-                                 class="img-thumbnail_50"/>
-                            {% else %}
-                            <img src="{{ url_for('static', filename='images/products/cupcake.png') }}"
-                                 class="img-thumbnail_50"/>
-                            {% endif %}
                         </td>
                         <td>{{ product.code }}</td>
                         <td>{{ product.name }}</td>
                         <td>{{ product.description }}</td>
+                        <td>{{ product.product_category.name }}</td>
                         <td>{{ product.price }}</td>
                     </tr>
                     {% endfor %}
+                    <div class="justify-content-between d-flex align-items-center bg-light px-2">
+                        <div class="fs-6">
+                            {{ products.total }} record(s) found
+                        </div>
+                        <div class="py-3 fs-6 fw-bold">
+                            {% for i in range(1,products.pages+1): %}
+                            <a href="{{ url_for('admin_product',page=i) }}"
+                               class="btn btn-sm {% if products.page == i %}btn-dark{%else%} btn-light{%endif%}">
+                                {{ i }}
+                            </a>
+
+                            {% endfor %}
+                        </div>
+                    </div>
                     {% endif %}
                     </tbody>
                 </table>

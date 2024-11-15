@@ -68,22 +68,53 @@ def home():
         session['cart'] = db_connect.cart
         session['order'] = db_connect.order
 
-    products = db_connect.get_products(keyword="", **{'status': 'ACTIVE'})
+
+    page = request.args.get('page', 1, type=int)
+    per_page = db_connect.records_per_page
+    offset = (page - 1) * per_page
+
     is_admin = False
 
     form = ProductSearchForm()
     categories = db_connect.get_product_categories()
-    form.category.choices = [(categ.id, categ.name) for categ in categories]
+    form.category.choices = [('0', 'All')]
+    form.category.choices.extend([(categ.id, categ.name) for categ in categories])
 
     form_cart = AddtoCartForm()
+
     if current_user.is_authenticated:
         user_access = db_connect.get_user_access(**{'user_id': current_user.id, 'user_group_id': 1})
         if user_access:
             is_admin = True
 
+
+    if 'search_home_criteria' not in session:
+        session['search_home_criteria'] = {
+                'keyword': "%%",
+                'category': 0
+        }
+
+    search_criteria = session['search_home_criteria']
     if request.method == "POST":
-        products = db_connect.get_products(keyword=form.keyword.data,
-                                           **{'status': 'ACTIVE', 'product_category_id': form.category.data})
+        page=1
+        search_criteria["keyword"] = f"%{form.keyword.data}%"
+        search_criteria["category"] = form.category.data
+        session['search_home_criteria'] = search_criteria
+    else:
+        if "search_home_criteria" in session:
+            get_search_criteria = session['search_home_criteria']
+            form.keyword.data = get_search_criteria["keyword"].replace("%","")
+            form.category.data = get_search_criteria["category"]
+
+
+
+    if int(search_criteria["category"]) > 0:
+        products = db_connect.get_products(keyword=search_criteria["keyword"],limit=page,
+                                       **{'status': 'ACTIVE', 'product_category_id': search_criteria["category"]})
+    else:
+        products = db_connect.get_products(keyword=search_criteria["keyword"],limit=page,
+                                           **{'status': 'ACTIVE'})
+
 
     return render_template("home.html", products=products, form=form, form_cart=form_cart, is_admin=is_admin,
                            now=DATE_NOW)
@@ -742,22 +773,48 @@ def admin_product():
         flash("Product catalog inaccessible.", 'error')
         return redirect(url_for('home'))
 
+    page = request.args.get('page', 1, type=int)
     form = ProductSearchForm()
-    products = db_connect.get_products(keyword="")
 
     categories = db_connect.get_product_categories()
-    form.category.choices = [(categ.id, categ.name) for categ in categories]
+    form.category.choices = [('0', 'All')]
+    form.category.choices.extend([(categ.id, categ.name) for categ in categories])
 
-    if form.validate_on_submit():
 
-        keyword = f"%{form.keyword.data}%"
+    if 'search_admin_product_criteria' not in session:
+        session['search_admin_product_criteria'] = {
+                'keyword': "%%",
+                'category': 0
+        }
 
+    search_criteria = session['search_admin_product_criteria']
+    if request.method == "POST":
+        page=1
+        search_criteria["keyword"] = f"%{form.keyword.data}%"
+        search_criteria["category"] = form.category.data
+        session['search_admin_product_criteria'] = search_criteria
+    else:
+        if "search_admin_product_criteria" in session:
+            get_search_criteria = session['search_admin_product_criteria']
+            form.keyword.data = get_search_criteria["keyword"].replace("%","")
+            form.category.data = get_search_criteria["category"]
+
+
+
+    if  search_criteria["keyword"] == "":
+        search_criteria["keyword"] = f"%{ search_criteria["keyword"] }%"
+
+    if int(search_criteria["category"]) > 0:
         where_cond = {
             'product_category_id': form.category.data
         }
-        products = db_connect.get_products(keyword, **where_cond)
-        if len(products) == 0:
-            flash("Product not found.", "error")
+        print("with where")
+        products = db_connect.get_products(search_criteria["keyword"], limit=page,**where_cond)
+    else:
+        products = db_connect.get_products(search_criteria["keyword"],limit=page)
+
+
+
     return render_template("admin_products.html", products=products, form=form, is_admin=True, now=DATE_NOW)
 
 
@@ -849,8 +906,7 @@ def admin_product_update(product_id):
         form.remarks.data = product.remarks
         form.price.data = product.price
         form.filename.data = product.img_path
-
-        # form.category.data = product.product_category
+        form.category.data = str(product.product_category_id)
 
     if form.validate_on_submit():
 
@@ -860,13 +916,16 @@ def admin_product_update(product_id):
                 flash("Product with same name already exists!", "error")
 
         new_file_name = ""
-        if form.filename.data:
+        if form.filename.data.filename:
             filename = secure_filename(form.filename.data.filename)
             # save to product images folder
             img_ext = filename.split('.')
             new_file_name = str(product.id) + "." + img_ext[-1]
             file_path = 'static/images/products/' + new_file_name
             form.filename.data.save(file_path)
+
+        if new_file_name == "":
+            new_file_name = product.img_path
 
         update_details = {
             'name': form.name.data,
@@ -988,6 +1047,7 @@ def admin_product_category_add():
                 flash("Product added successfully!", "success")
     return redirect(url_for('admin_product_category'))
 
+
 @app.route("/admin_prodcategory_update/<int:category_id>", methods=["GET", "POST"])
 @admin_only
 def admin_product_category_update(category_id):
@@ -1007,17 +1067,18 @@ def admin_product_category_update(category_id):
 
         if form.validate_on_submit():
             details = {
-                'name':form.description.data
+                'name': form.description.data
             }
-            description_exists =  db_connect.get_product_category_name(form.description.data)
+            description_exists = db_connect.get_product_category_name(form.description.data)
             if description_exists:
                 flash(f"Category with same description already exists!", "error")
             else:
-                db_connect.update_product_category(details,category_id)
+                db_connect.update_product_category(details, category_id)
                 flash(f"Category updated!", "success")
     else:
         flash("Invalid category!", "error")
     return redirect(url_for('admin_product_category'))
+
 
 @app.route("/admin_get_category_json/<int:category_id>", methods=["GET"])
 def admin_get_category_json(category_id):
@@ -1038,6 +1099,7 @@ def admin_get_category_json(category_id):
     }
 
     return jsonify(details)
+
 
 @app.route("/admin_user", methods=["GET", "POST"])
 @admin_only
