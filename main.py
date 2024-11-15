@@ -802,7 +802,7 @@ def admin_product():
 
 
     if  search_criteria["keyword"] == "":
-        search_criteria["keyword"] = f"%{ search_criteria["keyword"] }%"
+        search_criteria["keyword"] = f"%{ search_criteria['keyword'] }%"
 
     if int(search_criteria["category"]) > 0:
         where_cond = {
