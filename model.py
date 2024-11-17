@@ -557,7 +557,7 @@ class DBInit():
                                         OrderHeader.order_date <= today_end).with_entities(
             func.sum(OrderHeader.total)).scalar() or 0
 
-        record = {'date_range': f"{today_start.strftime("%b-%d-%Y")}", 'total': total}
+        record = {'date_range': f"{today_start.strftime('%b-%d-%Y')}", 'total': total}
         return record
 
     def revenue_current_week(self):
@@ -571,7 +571,7 @@ class DBInit():
                                         OrderHeader.order_date <= end_of_week).with_entities(
             func.sum(OrderHeader.total)).scalar() or 0
 
-        record = {'date_range': f"{start_of_week.strftime("%b-%d")} to {end_of_week.strftime("%b-%d")}", 'total': total}
+        record = {'date_range': f"{start_of_week.strftime('%b-%d')} to {end_of_week.strftime('%b-%d')}", 'total': total}
         return record
 
     def revenue_current_month(self):
@@ -589,7 +589,7 @@ class DBInit():
                                         OrderHeader.order_date < start_of_next_month).with_entities(
             func.sum(OrderHeader.total)).scalar() or 0
 
-        record = {'date_range': f"{start_of_month.strftime("%b %Y")}", 'total': total}
+        record = {'date_range': f"{start_of_month.strftime('%b %Y')}", 'total': total}
         return record
 
     def revenue_quarter(self, start_month):
@@ -616,7 +616,7 @@ class DBInit():
 
         prev_month = 12 if end_of_quarter.month == 1 else end_of_quarter.month - 1
         record = {
-            'date_range': f"{start_of_quarter.strftime("%b %Y")} - {end_of_quarter.replace(month=prev_month).strftime("%b %Y")}",
+            'date_range': f"{start_of_quarter.strftime('%b %Y')} - {end_of_quarter.replace(month=prev_month).strftime('%b %Y')}",
             'total': total}
         return record
 
