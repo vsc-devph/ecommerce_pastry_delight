@@ -1261,21 +1261,22 @@ def send_notif(send_to, subject, html_content):
     msg["From"] = os.getenv('GMAIL_EMAIL')
     msg["To"] = send_to
 
-    # Attach the HTML content to the message
-    html_part = MIMEText(html_content, "html")
-    msg.attach(html_part)
-
-    # Open and attach the image file
-    with open('static/images/pd_horizontal.png', 'rb') as img_file:
-        img = MIMEImage(img_file.read())
-        img.add_header('Content-ID', '<image1>')  # Content-ID to reference the image in HTML
-        msg.attach(img)
-
-    with smtplib.SMTP(os.getenv("GMAIL_SMTP")) as connection:
-        connection.starttls()
-        connection.login(user=os.getenv('GMAIL_EMAIL'), password=os.getenv('GMAIL_PASSKEY'))
-        connection.sendmail(from_addr=os.getenv('GMAIL_EMAIL'), to_addrs=send_to,
-                            msg=msg.as_string())
+    # Disable comment if memory in render is fix
+    # # Attach the HTML content to the message
+    # html_part = MIMEText(html_content, "html")
+    # msg.attach(html_part)
+    #
+    # # Open and attach the image file
+    # with open('static/images/pd_horizontal.png', 'rb') as img_file:
+    #     img = MIMEImage(img_file.read())
+    #     img.add_header('Content-ID', '<image1>')  # Content-ID to reference the image in HTML
+    #     msg.attach(img)
+    #
+    # with smtplib.SMTP(os.getenv("GMAIL_SMTP")) as connection:
+    #     connection.starttls()
+    #     connection.login(user=os.getenv('GMAIL_EMAIL'), password=os.getenv('GMAIL_PASSKEY'))
+    #     connection.sendmail(from_addr=os.getenv('GMAIL_EMAIL'), to_addrs=send_to,
+    #                         msg=msg.as_string())
 
 
 if __name__ == '__main__':
