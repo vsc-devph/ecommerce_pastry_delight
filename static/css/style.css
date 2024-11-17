@@ -11004,6 +11004,11 @@ nav .nav-item .active{
 .dashboard_icon{
   font-size: calc(3.375rem + 1.5vw) !important;
 }
+
+.dashboard_icon_50{
+  font-size: calc(1.75rem + 1.5vw) !important;
+}
+
 .text-navy_blue{
     color:#053f66;
 }

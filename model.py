@@ -4,7 +4,7 @@ from sqlalchemy import Integer, String, ForeignKey, DateTime, Float
 from sqlalchemy.sql import func, collate
 from flask_login import UserMixin
 from sqlalchemy import or_, and_, text, engine
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Base(DeclarativeBase):
@@ -175,7 +175,7 @@ class DBInit():
             'discount_code': '',
             'total': 0
         }
-        self.records_per_page = 3
+        self.records_per_page = 10
         self.db.init_app(self.app)
         self.create_table()
 
@@ -209,23 +209,24 @@ class DBInit():
                 connection.execute(text(view_creation_query))
 
     ##PRODUCTS
-    def get_products(self, keyword,limit, **where_cond):
+    def get_products(self, keyword, page, **where_cond):
         if where_cond:
             if keyword != "":
 
                 keyword = f"%{keyword}%"
                 record_list = Product.query.filter_by(**where_cond).where(
                     or_(Product.name.like(keyword), Product.code.like(keyword), Product.description.like(keyword),
-                        Product.remarks.like(keyword))).order_by(Product.name.asc()).paginate(page=limit, per_page=self.records_per_page)
+                        Product.remarks.like(keyword))).order_by(Product.name.asc()).paginate(page=page,
+                                                                                              per_page=self.records_per_page)
             else:
 
                 record_list = (Product.query.filter_by(**where_cond).order_by(Product.name.asc())
-                               .paginate(page=limit, per_page=self.records_per_page))
+                               .paginate(page=page, per_page=self.records_per_page))
 
         else:
             record_list = Product.query.filter_by(**where_cond).where(
                 or_(Product.name.like(keyword), Product.code.like(keyword), Product.description.like(keyword),
-                    Product.remarks.like(keyword))).order_by(Product.name.asc()).paginate(page=limit,
+                    Product.remarks.like(keyword))).order_by(Product.name.asc()).paginate(page=page,
                                                                                           per_page=self.records_per_page)
 
         return record_list
@@ -278,7 +279,7 @@ class DBInit():
             GROUP BY product_id,product.code, product_desc
             ORDER BY  SUM(order_line.quantity) DESC
         """
-        limit = f" LIMIT {limit}"
+        limit = f" limit {limit}"
         result = db.session.execute(text(query + limit))
         rows = result.fetchall()
         column_names = result.keys()  # Get the column names
@@ -303,7 +304,7 @@ class DBInit():
         else:
             record_list = (self.db.session.execute(
                 db.select(ProductCategory).where(ProductCategory.name.like(keyword)).order_by(ProductCategory.name))
-                      .scalars().all())
+                           .scalars().all())
         return record_list
 
     def get_product_category_name(self, name):
@@ -346,15 +347,16 @@ class DBInit():
         records = User.query.filter_by(**user_details).all()
         return records
 
-    def get_users_by(self, keyword, **where_cond):
+    def get_users_by(self, keyword, page, **where_cond):
         if keyword != "":
             keyword = f"%{keyword}%"
             record_list = User.query.filter_by(**where_cond).where(
                 or_(User.fname.like(keyword), User.mname.like(keyword), User.lname.like(keyword)
                     , User.email.like(keyword), User.contact_no.like(keyword), User.address.like(keyword))).order_by(
-                User.lname.asc()).all()
+                User.lname.asc()).paginate(page=page, per_page=self.records_per_page)
         else:
-            record_list = User.query.filter_by(**where_cond).order_by(User.lname.asc()).all()
+            record_list = User.query.filter_by(**where_cond).order_by(User.lname.asc()).paginate(page=page,
+                                                                                                 per_page=self.records_per_page)
         return record_list
 
     def add_user(self, details: User):
@@ -468,14 +470,16 @@ class DBInit():
             db.select(OrderHeader).where(OrderHeader.id == id).order_by(OrderHeader.order_num)).scalar()
         return record
 
-    def get_orders(self, keyword, **where_cond):
+    def get_orders(self, keyword, page, **where_cond):
         if keyword != "":
             keyword = f"%{keyword}%"
-            record_list = OrderHeader.query.filter_by(**where_cond).where(
-                or_(OrderHeader.order_num.like(keyword), OrderHeader.status.like(keyword))).order_by(
-                OrderHeader.order_date.asc()).all()
+            record_list = OrderHeader.query.join(User).filter_by(**where_cond).where(
+                or_(OrderHeader.order_num.like(keyword), OrderHeader.status.like(keyword), User.fname.like(keyword),
+                    User.mname.like(keyword), User.lname.like(keyword))).order_by(
+                OrderHeader.order_date.asc()).paginate(page=page, per_page=self.records_per_page)
         else:
-            record_list = OrderHeader.query.filter_by(**where_cond).order_by(OrderHeader.order_date.asc()).all()
+            record_list = (OrderHeader.query.filter_by(**where_cond).order_by(OrderHeader.order_date.asc())
+                           .paginate(page=page, per_page=self.records_per_page))
         return record_list
 
     def get_orders_by(self, user_id):
@@ -539,3 +543,91 @@ class DBInit():
     def add_currency(self, new_currency: ExchangeRate):
         self.db.session.add(new_currency)
         self.db.session.commit()
+
+    def revenue_total(self):
+        total = OrderHeader.query.where(OrderHeader.status == 'PAID').with_entities(
+            func.sum(OrderHeader.total)).scalar() or 0
+        return total
+
+    def revenue_today(self):
+        today_start = datetime.combine(datetime.today(), datetime.min.time())
+        today_end = datetime.combine(datetime.today(), datetime.max.time())
+
+        total = OrderHeader.query.where(OrderHeader.status == 'PAID', OrderHeader.order_date >= today_start,
+                                        OrderHeader.order_date <= today_end).with_entities(
+            func.sum(OrderHeader.total)).scalar() or 0
+
+        record = {'date_range': f"{today_start.strftime("%b-%d-%Y")}", 'total': total}
+        return record
+
+    def revenue_current_week(self):
+        today = datetime.now()
+        start_of_week = today - timedelta(days=today.weekday())
+
+        # Calculate the end of the week (Sunday)
+        end_of_week = start_of_week + timedelta(days=6)
+
+        total = OrderHeader.query.where(OrderHeader.status == 'PAID', OrderHeader.order_date >= start_of_week,
+                                        OrderHeader.order_date <= end_of_week).with_entities(
+            func.sum(OrderHeader.total)).scalar() or 0
+
+        record = {'date_range': f"{start_of_week.strftime("%b-%d")} to {end_of_week.strftime("%b-%d")}", 'total': total}
+        return record
+
+    def revenue_current_month(self):
+        today = datetime.now()
+        # Calculate the start of the current month
+        start_of_month = today.replace(day=1)
+
+        # Calculate the start of the next month
+        if today.month == 12:  # Handle December (year rollover)
+            start_of_next_month = today.replace(year=today.year + 1, month=1, day=1)
+        else:
+            start_of_next_month = today.replace(month=today.month + 1, day=1)
+
+        total = OrderHeader.query.where(OrderHeader.status == 'PAID', OrderHeader.order_date >= start_of_month,
+                                        OrderHeader.order_date < start_of_next_month).with_entities(
+            func.sum(OrderHeader.total)).scalar() or 0
+
+        record = {'date_range': f"{start_of_month.strftime("%b %Y")}", 'total': total}
+        return record
+
+    def revenue_quarter(self, start_month):
+
+        # Q1: January  1 - March 31
+        # Q2: April 1 - June   30
+        # Q3: July 1 - September 30
+        # Q4: October 1 - December   31
+
+        today = datetime.now()
+        quarter_start_month = ((start_month - 1) // 3) * 3 + 1
+        start_of_quarter = today.replace(month=quarter_start_month, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        if quarter_start_month == 10:  # Handle Q4 year-end
+            end_of_quarter = today.replace(year=today.year + 1, month=1, day=1, hour=0, minute=0, second=0,
+                                           microsecond=0)
+        else:
+            end_of_quarter = today.replace(month=quarter_start_month + 3, day=1, hour=0, minute=0, second=0,
+                                           microsecond=0)
+
+        total = OrderHeader.query.where(OrderHeader.status == 'PAID', OrderHeader.order_date >= start_of_quarter,
+                                        OrderHeader.order_date < end_of_quarter).with_entities(
+            func.sum(OrderHeader.total)).scalar() or 0
+
+        prev_month = 12 if end_of_quarter.month == 1 else end_of_quarter.month - 1
+        record = {
+            'date_range': f"{start_of_quarter.strftime("%b %Y")} - {end_of_quarter.replace(month=prev_month).strftime("%b %Y")}",
+            'total': total}
+        return record
+
+    def revenue_current_year(self):
+        today = datetime.now()
+        start_of_year = today.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        end_of_year = today.replace(year=today.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        total = OrderHeader.query.where(OrderHeader.status == 'PAID', OrderHeader.order_date >= start_of_year,
+                                        OrderHeader.order_date < end_of_year).with_entities(
+            func.sum(OrderHeader.total)).scalar() or 0
+
+        record = {'date_range': f"{today.year}", 'total': total}
+        return record

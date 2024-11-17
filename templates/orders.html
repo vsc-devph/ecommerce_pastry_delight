@@ -2,20 +2,22 @@
 {% from "bootstrap5/form.html" import render_form %}
 <main>
 
-    <div class="row">
-        <div class="col-6 col-md-4">
-            <div class="border border-1 border-secondary bg-light mt-5 p-3">
-                <h6>Search Order</h6>
-                <hr/>
-                <div class="fs-7">
-                    {{ render_form(form) }}
-                </div>
+    <div class="d-flex justify-content-center">
 
-            </div>
-        </div>
+        <div class="col-md-10 p-3">
 
-        <div class="col-md-8 p-3">
             <h1 class="mt-3">My Orders</h1>
+            <div class="row">
+                <div class="border border-1 border-secondary bg-light my-3 p-3">
+                    <h6>Search Order</h6>
+                    <hr/>
+                    <div class="fs-7">
+                        {{ render_form(form) }}
+                    </div>
+
+                </div>
+            </div>
+
             {% with messages = get_flashed_messages(with_categories=true)%}
             {% if messages %}
             {% for category, message in messages %}
@@ -36,6 +38,24 @@
             {% endif %}
 
             {%endwith%}
+             {% if orders.total > 0 %}
+            <div class="justify-content-between d-flex align-items-center bg-light px-2">
+                <div class="fs-7 fst-italic ">
+                    {{ orders.total }} record(s) found
+                </div>
+                <div class="py-3 fs-6 fw-bold">
+                    Page
+                    {% for i in range(1,orders.pages+1): %}
+                    <a href="{{ url_for('order_list',page=i) }}"
+                       class="btn btn-sm {% if orders.page == i %}btn-dark{%else%} btn-light{%endif%}">
+                        {{ i }}
+                    </a>
+
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <hr/>
             <table class="table fs-6">
                 <thead>
@@ -48,7 +68,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                {% if orders|length == 0 %}
+                {% if orders.total == 0 %}
                     <tr>
                         <td colspan="5">
                             <div class="alert alert-secondary mt-3 fs-6" role="alert">
@@ -59,7 +79,10 @@
                 {% else %}
                 {% for order in orders:%}
                     <tr>
-                        <td></td>
+                        <td>
+                              <span class="fw-bold text-muted fs-7 pe-1">{{ ((orders.page * orders.per_page) - (orders.per_page)) + loop.index }})</span>
+
+                        </td>
                         <td>{{ order.order_date }}</td>
                         <td>
                             <a href="{{ url_for('order_details',order_id=order.id) }}" class="btn btn-sm btn-warning">

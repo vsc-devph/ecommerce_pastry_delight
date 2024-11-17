@@ -34,6 +34,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 DATE_NOW = datetime.datetime.now()
+RECORDS_PER_PAGE = 10
+RECORDS_PER_PAGE_HOME = 6
 
 
 @login_manager.user_loader
@@ -68,7 +70,9 @@ def home():
         session['cart'] = db_connect.cart
         session['order'] = db_connect.order
 
+    cart = session['cart']
 
+    db_connect.records_per_page = RECORDS_PER_PAGE_HOME
     page = request.args.get('page', 1, type=int)
     per_page = db_connect.records_per_page
     offset = (page - 1) * per_page
@@ -87,36 +91,32 @@ def home():
         if user_access:
             is_admin = True
 
-
     if 'search_home_criteria' not in session:
         session['search_home_criteria'] = {
-                'keyword': "%%",
-                'category': 0
+            'keyword': "%%",
+            'category': 0
         }
 
     search_criteria = session['search_home_criteria']
     if request.method == "POST":
-        page=1
+        page = 1
         search_criteria["keyword"] = f"%{form.keyword.data}%"
         search_criteria["category"] = form.category.data
         session['search_home_criteria'] = search_criteria
     else:
         if "search_home_criteria" in session:
             get_search_criteria = session['search_home_criteria']
-            form.keyword.data = get_search_criteria["keyword"].replace("%","")
+            form.keyword.data = get_search_criteria["keyword"].replace("%", "")
             form.category.data = get_search_criteria["category"]
 
-
-
     if int(search_criteria["category"]) > 0:
-        products = db_connect.get_products(keyword=search_criteria["keyword"],limit=page,
-                                       **{'status': 'ACTIVE', 'product_category_id': search_criteria["category"]})
+        products = db_connect.get_products(keyword=search_criteria["keyword"], page=page,
+                                           **{'status': 'ACTIVE', 'product_category_id': search_criteria["category"]})
     else:
-        products = db_connect.get_products(keyword=search_criteria["keyword"],limit=page,
+        products = db_connect.get_products(keyword=search_criteria["keyword"], page=page,
                                            **{'status': 'ACTIVE'})
 
-
-    return render_template("home.html", products=products, form=form, form_cart=form_cart, is_admin=is_admin,
+    return render_template("home.html", products=products,cart=cart, form=form, form_cart=form_cart, is_admin=is_admin,
                            now=DATE_NOW)
 
 
@@ -600,10 +600,26 @@ def order_list():
             is_admin = True
 
     form = SearchForm()
-    orders = db_connect.get_orders_by(current_user.id)
 
+    page = request.args.get('page', 1, type=int)
+    db_connect.records_per_page = RECORDS_PER_PAGE
+    if 'search_order_criteria' not in session:
+        session['search_order_criteria'] = {
+            'keyword': "%%",
+        }
+
+    search_criteria = session['search_order_criteria']
     if request.method == "POST":
-        orders = db_connect.get_orders(keyword=form.keyword.data, **{'user_id': current_user.id})
+        page = 1
+        search_criteria["keyword"] = f"%{form.keyword.data}%"
+        session['search_order_criteria'] = search_criteria
+    else:
+        get_search_criteria = session['search_order_criteria']
+        form.keyword.data = get_search_criteria["keyword"].replace("%", "")
+
+    search_criteria = session['search_order_criteria']
+    orders = db_connect.get_orders(keyword=search_criteria['keyword'], page=page, **{'id': current_user.id})
+
 
     return render_template("orders.html", form=form, orders=orders, is_admin=is_admin, now=DATE_NOW)
 
@@ -710,11 +726,30 @@ def admin_dashboard():
 
     new_users = len(db_connect.get_users(**{'status': 'ACTIVE'}))
     best_selling_products = db_connect.product_best_selling(5)
-    paid_orders = len(db_connect.get_orders(keyword="", **{'status': 'PAID'}))
+    paid_orders = (db_connect.get_orders(keyword="",page=1, **{'status': 'PAID'}))
+    revenue_total = db_connect.revenue_total()
+    revenue_today = db_connect.revenue_today()
+    revenue_current_week = db_connect.revenue_current_week()
+    revenue_current_month = db_connect.revenue_current_month()
+    revenue_q1 = db_connect.revenue_quarter(start_month=1)
+    revenue_q2 = db_connect.revenue_quarter(start_month=4)
+    revenue_q3 = db_connect.revenue_quarter(start_month=7)
+    revenue_q4 = db_connect.revenue_quarter(start_month=10)
+    revenue_current_year = db_connect.revenue_current_year()
+
     data = {
         'new_users': new_users,
-        'paid_orders': paid_orders,
-        'best_selling': best_selling_products
+        'paid_orders': paid_orders.total,
+        'best_selling': best_selling_products,
+        'revenue_total': revenue_total,
+        'revenue_today': revenue_today,
+        'revenue_current_week': revenue_current_week,
+        'revenue_current_month': revenue_current_month,
+        'revenue_q1': revenue_q1,
+        'revenue_q2': revenue_q2,
+        'revenue_q3': revenue_q3,
+        'revenue_q4': revenue_q4,
+        'revenue_current_year': revenue_current_year,
     }
 
     return render_template("admin_dashboard.html", data=data, is_admin=True, now=DATE_NOW)
@@ -733,10 +768,24 @@ def admin_order():
         return redirect(url_for('home'))
 
     form = SearchForm()
-    orders = db_connect.get_orders(keyword="")
+    page = request.args.get('page', 1, type=int)
+    db_connect.records_per_page = RECORDS_PER_PAGE
+    if 'search_admin_order_criteria' not in session:
+        session['search_admin_order_criteria'] = {
+            'keyword': "%%",
+        }
 
+    search_criteria = session['search_admin_order_criteria']
     if request.method == "POST":
-        orders = db_connect.get_orders(keyword=form.keyword.data)
+        page = 1
+        search_criteria["keyword"] = f"%{form.keyword.data}%"
+        session['search_admin_order_criteria'] = search_criteria
+    else:
+        get_search_criteria = session['search_admin_order_criteria']
+        form.keyword.data = get_search_criteria["keyword"].replace("%", "")
+
+    search_criteria = session['search_admin_order_criteria']
+    orders = db_connect.get_orders(keyword=search_criteria['keyword'],page=page)
 
     return render_template("admin_orders.html", form=form, orders=orders, is_admin=True, now=DATE_NOW)
 
@@ -773,47 +822,39 @@ def admin_product():
         flash("Product catalog inaccessible.", 'error')
         return redirect(url_for('home'))
 
-    page = request.args.get('page', 1, type=int)
     form = ProductSearchForm()
 
     categories = db_connect.get_product_categories()
     form.category.choices = [('0', 'All')]
     form.category.choices.extend([(categ.id, categ.name) for categ in categories])
 
-
+    page = request.args.get('page', 1, type=int)
+    db_connect.records_per_page = RECORDS_PER_PAGE
     if 'search_admin_product_criteria' not in session:
         session['search_admin_product_criteria'] = {
-                'keyword': "%%",
-                'category': 0
+            'keyword': "%%",
+            'category': 0
         }
 
     search_criteria = session['search_admin_product_criteria']
     if request.method == "POST":
-        page=1
+        page = 1
         search_criteria["keyword"] = f"%{form.keyword.data}%"
         search_criteria["category"] = form.category.data
         session['search_admin_product_criteria'] = search_criteria
     else:
         if "search_admin_product_criteria" in session:
             get_search_criteria = session['search_admin_product_criteria']
-            form.keyword.data = get_search_criteria["keyword"].replace("%","")
+            form.keyword.data = get_search_criteria["keyword"].replace("%", "")
             form.category.data = get_search_criteria["category"]
-
-
-
-    if  search_criteria["keyword"] == "":
-        search_criteria["keyword"] = f"%{ search_criteria['keyword'] }%"
 
     if int(search_criteria["category"]) > 0:
         where_cond = {
             'product_category_id': form.category.data
         }
-        print("with where")
-        products = db_connect.get_products(search_criteria["keyword"], limit=page,**where_cond)
+        products = db_connect.get_products(search_criteria["keyword"], page=page, **where_cond)
     else:
-        products = db_connect.get_products(search_criteria["keyword"],limit=page)
-
-
+        products = db_connect.get_products(search_criteria["keyword"], page=page)
 
     return render_template("admin_products.html", products=products, form=form, is_admin=True, now=DATE_NOW)
 
@@ -1104,14 +1145,29 @@ def admin_get_category_json(category_id):
 @app.route("/admin_user", methods=["GET", "POST"])
 @admin_only
 def admin_user():
-    form = SearchForm()
-    users = db_connect.get_users_by(keyword="")
 
-    if form.validate_on_submit():
-        keyword = f"%{form.keyword.data}%"
-        users = db_connect.get_users_by(keyword)
-        if len(users) == 0:
-            flash("User not found.", "error")
+    form = SearchForm()
+
+    page = request.args.get('page', 1, type=int)
+    db_connect.records_per_page = RECORDS_PER_PAGE
+    if 'search_admin_user_criteria' not in session:
+        session['search_admin_user_criteria'] = {
+            'keyword': "%%",
+        }
+
+    search_criteria = session['search_admin_user_criteria']
+
+    if request.method == "POST":
+        page = 1
+        search_criteria["keyword"] = f"%{form.keyword.data}%"
+        session['search_admin_user_criteria'] = search_criteria
+    else:
+        get_search_criteria = session['search_admin_user_criteria']
+        form.keyword.data = get_search_criteria["keyword"].replace("%", "")
+
+    search_criteria = session['search_admin_user_criteria']
+    users = db_connect.get_users_by(search_criteria["keyword"], page=page)
+
 
     return render_template("admin_users.html", users=users, form=form, is_admin=True, now=DATE_NOW)
 
