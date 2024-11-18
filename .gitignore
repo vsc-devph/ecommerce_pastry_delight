@@ -1,8 +1,7 @@
 #Environment Variables
 .env
 #SQL DB
-#ecommerce.db
-samp_item.sql
+instance/
 #Runtime Pycharm Workspace
 .idea/
 # Virtual Environment
