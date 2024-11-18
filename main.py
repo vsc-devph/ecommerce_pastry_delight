@@ -1279,7 +1279,7 @@ def send_notif(send_to, subject, html_content):
         img.add_header('Content-ID', '<image1>')  # Content-ID to reference the image in HTML
         msg.attach(img)
 
-    with smtplib.SMTP(os.getenv("GMAIL_SMTP")) as connection:
+    with smtplib.SMTP(os.getenv("GMAIL_SMTP"),int(os.getenv("GMAIL_SMTP_PORT"))) as connection:
         connection.starttls()
         connection.login(user=os.getenv('GMAIL_EMAIL'), password=os.getenv('GMAIL_PASSKEY'))
         connection.sendmail(from_addr=os.getenv('GMAIL_EMAIL'), to_addrs=send_to,
