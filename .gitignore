@@ -2,6 +2,7 @@
 .env
 #SQL DB
 instance/
+ecommerce.db
 #Runtime Pycharm Workspace
 .idea/
 # Virtual Environment
