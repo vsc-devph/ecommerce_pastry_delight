@@ -559,7 +559,14 @@ def checkout_success(order_id):
     return redirect(url_for('order_list'))
 
 
-# @app.route("/mail/<int:order_id>", methods=["GET", "POST"])
+@app.route("/order_notif/<int:order_id>", methods=["GET", "POST"])
+def order_notif(order_id):
+    html_content = mail_order_template(order_id)
+    user = db_connect.get_user_details(current_user.id)
+    order = db_connect.get_order(order_id)
+    send_notif(user.email, f"Pastry Delight: Order {order.order_num} - {order.status}", html_content)
+    return redirect(url_for('order_list'))
+
 def mail_order_template(order_id):
     with open("templates/notif_order.html", 'r') as file:
         html_content = file.read()
@@ -1262,21 +1269,21 @@ def send_notif(send_to, subject, html_content):
     msg["To"] = send_to
 
     # Disable comment if memory in render is fix
-    # # Attach the HTML content to the message
-    # html_part = MIMEText(html_content, "html")
-    # msg.attach(html_part)
-    #
-    # # Open and attach the image file
-    # with open('static/images/pd_horizontal.png', 'rb') as img_file:
-    #     img = MIMEImage(img_file.read())
-    #     img.add_header('Content-ID', '<image1>')  # Content-ID to reference the image in HTML
-    #     msg.attach(img)
-    #
-    # with smtplib.SMTP(os.getenv("GMAIL_SMTP")) as connection:
-    #     connection.starttls()
-    #     connection.login(user=os.getenv('GMAIL_EMAIL'), password=os.getenv('GMAIL_PASSKEY'))
-    #     connection.sendmail(from_addr=os.getenv('GMAIL_EMAIL'), to_addrs=send_to,
-    #                         msg=msg.as_string())
+    # Attach the HTML content to the message
+    html_part = MIMEText(html_content, "html")
+    msg.attach(html_part)
+
+    # Open and attach the image file
+    with open('static/images/pd_horizontal.png', 'rb') as img_file:
+        img = MIMEImage(img_file.read())
+        img.add_header('Content-ID', '<image1>')  # Content-ID to reference the image in HTML
+        msg.attach(img)
+
+    with smtplib.SMTP(os.getenv("GMAIL_SMTP")) as connection:
+        connection.starttls()
+        connection.login(user=os.getenv('GMAIL_EMAIL'), password=os.getenv('GMAIL_PASSKEY'))
+        connection.sendmail(from_addr=os.getenv('GMAIL_EMAIL'), to_addrs=send_to,
+                            msg=msg.as_string())
 
 
 if __name__ == '__main__':

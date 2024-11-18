@@ -476,9 +476,9 @@ class DBInit():
             record_list = OrderHeader.query.join(User).filter_by(**where_cond).where(
                 or_(OrderHeader.order_num.like(keyword), OrderHeader.status.like(keyword), User.fname.like(keyword),
                     User.mname.like(keyword), User.lname.like(keyword))).order_by(
-                OrderHeader.order_date.asc()).paginate(page=page, per_page=self.records_per_page)
+                OrderHeader.order_date.desc()).paginate(page=page, per_page=self.records_per_page)
         else:
-            record_list = (OrderHeader.query.filter_by(**where_cond).order_by(OrderHeader.order_date.asc())
+            record_list = (OrderHeader.query.filter_by(**where_cond).order_by(OrderHeader.order_date.desc())
                            .paginate(page=page, per_page=self.records_per_page))
         return record_list
 
