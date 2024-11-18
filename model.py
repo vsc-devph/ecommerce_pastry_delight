@@ -268,7 +268,7 @@ class DBInit():
 
     def product_best_selling(self, limit):
         query = """
-            SELECT order_line.product_id , product.code,order_line.product_desc, 
+            SELECT order_line.product_id , product.code,order_line.product_name,order_line.product_desc, 
             SUM(order_line.quantity) as total_qty
             FROM order_line
             INNER JOIN order_header 
@@ -276,7 +276,7 @@ class DBInit():
             INNER JOIN product
             on product.id == order_line.product_id
             WHERE order_header.status = 'PAID'
-            GROUP BY product_id,product.code, product_desc
+            GROUP BY product_id,product.code,product_name, product_desc
             ORDER BY  SUM(order_line.quantity) DESC
         """
         limit = f" limit {limit}"
