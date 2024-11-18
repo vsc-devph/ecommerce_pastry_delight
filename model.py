@@ -563,15 +563,17 @@ class DBInit():
     def revenue_current_week(self):
         today = datetime.now()
         start_of_week = today - timedelta(days=today.weekday())
+        start_of_week = start_of_week.replace(hour=0)
 
         # Calculate the end of the week (Sunday)
-        end_of_week = start_of_week + timedelta(days=6)
+        end_of_week = start_of_week + timedelta(days=7)
+        end_of_week = end_of_week.replace(hour=0,minute=0,second=0,microsecond=0)
 
         total = OrderHeader.query.where(OrderHeader.status == 'PAID', OrderHeader.order_date >= start_of_week,
-                                        OrderHeader.order_date <= end_of_week).with_entities(
+                                        OrderHeader.order_date < end_of_week).with_entities(
             func.sum(OrderHeader.total)).scalar() or 0
 
-        record = {'date_range': f"{start_of_week.strftime('%b-%d')} to {end_of_week.strftime('%b-%d')}", 'total': total}
+        record = {'date_range': f"{start_of_week.strftime('%b-%d')} to {end_of_week.replace(day=end_of_week.day-1).strftime('%b-%d')}", 'total': total}
         return record
 
     def revenue_current_month(self):
