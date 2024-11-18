@@ -68,7 +68,8 @@
                                     <tr class="table-active">
                                         <th>Code</th>
                                         <th>Product Description</th>
-                                        <th class="text-center">Total</th>
+                                        <th class="text-end">Total Revenue</th>
+                                        <th class="text-center">Qty Ordered</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -76,8 +77,9 @@
                                     <tr>
                                         <td>{{ product.code }}</td>
                                         <td>{{ product.product_name }}
-                                            <span class="text-muted">{{ product.product_desc }}</span>
+                                            <div class="text-muted fs-7">{{ product.product_desc }}</div>
                                         </td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(product.total_amt) }}</td>
                                         <td class="text-center">{{ product.total_qty|int }}</td>
                                     </tr>
                                     {% endfor %}

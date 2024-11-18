@@ -269,7 +269,7 @@ class DBInit():
     def product_best_selling(self, limit):
         query = """
             SELECT order_line.product_id , product.code,order_line.product_name,order_line.product_desc, 
-            SUM(order_line.quantity) as total_qty
+            SUM(order_line.quantity) as total_qty,SUM(order_line.price_after_discount) as total_amt
             FROM order_line
             INNER JOIN order_header 
             on order_header.id == order_line.order_header_id
@@ -277,7 +277,7 @@ class DBInit():
             on product.id == order_line.product_id
             WHERE order_header.status = 'PAID'
             GROUP BY product_id,product.code,product_name, product_desc
-            ORDER BY  SUM(order_line.quantity) DESC
+            ORDER BY  SUM(order_line.quantity) DESC,SUM(order_line.price_after_discount) DESC
         """
         limit = f" limit {limit}"
         result = db.session.execute(text(query + limit))
@@ -616,7 +616,7 @@ class DBInit():
 
         prev_month = 12 if end_of_quarter.month == 1 else end_of_quarter.month - 1
         record = {
-            'date_range': f"{start_of_quarter.strftime('%b %Y')} - {end_of_quarter.replace(month=prev_month).strftime('%b %Y')}",
+            'date_range': f"{start_of_quarter.strftime('%b %Y')} - {end_of_quarter.replace(month=prev_month, year=start_of_quarter.year).strftime('%b %Y')}",
             'total': total}
         return record
 
